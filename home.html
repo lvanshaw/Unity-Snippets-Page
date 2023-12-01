@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unity Code Snippets</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .code-container {
+            margin-bottom: 20px;
+        }
+
+        .code-title {
+            cursor: pointer;
+            padding: 10px;
+            background-color: #3498db;
+            color: #fff;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .code-content {
+            display: none;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+
+        #addSnippetForm {
+            margin-bottom: 20px;
+        }
+
+        #titleInput, #contentInput {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        #saveButton {
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Unity Code Snippets</h1>
+
+    <div id="addSnippetForm">
+        <label for="titleInput">Title:</label>
+        <input type="text" id="titleInput" placeholder="Enter title">
+
+        <label for="contentInput">Content:</label>
+        <textarea id="contentInput" placeholder="Enter content"></textarea>
+
+        <button id="saveButton" onclick="saveSnippet()">Save Snippet</button>
+    </div>
+
+    <div id="codeSnippets"></div>
+
+    <script>
+        function loadSnippetsIntoLocalStorage() {
+            // Disable CORS temporarily for local testing
+            document.cookie = 'disableCORS=true; expires=0; path=/';
+
+            // Fetch the JSON file
+            fetch('snippets.json')
+                .then(response => response.json())
+                .then(snippets => {
+                    // Save snippets to localStorage
+                    localStorage.setItem('snippets', JSON.stringify(snippets));
+                    console.log('Snippets loaded into localStorage:', snippets);
+                })
+                .catch(error => console.error('Error loading snippets:', error))
+                .finally(() => {
+                    // Revert CORS changes when the fetch operation is completed
+                    document.cookie = 'disableCORS=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
+                });
+        }
+
+        // Call the function when the page loads
+        window.onload = function () {
+            loadSnippetsIntoLocalStorage();
+        };
+        function saveSnippet() {
+            var title = document.getElementById('titleInput').value;
+            var content = document.getElementById('contentInput').value;
+
+            if (title && content) {
+                // Save the snippet to localStorage
+                var snippets = JSON.parse(localStorage.getItem('snippets')) || [];
+                snippets.push({ title: title, content: content });
+                localStorage.setItem('snippets', JSON.stringify(snippets));
+
+                // Refresh the snippets list
+                loadSnippets();
+            }
+        }
+
+        function toggleCode(index) {
+            var codeContent = document.getElementById('codeContent' + index);
+            codeContent.style.display = (codeContent.style.display === 'none' || codeContent.style.display === '') ? 'block' : 'none';
+        }
+
+        function loadSnippets() {
+            var snippets = JSON.parse(localStorage.getItem('snippets')) || [];
+            var codeSnippetsContainer = document.getElementById('codeSnippets');
+
+            // Clear existing snippets
+            codeSnippetsContainer.innerHTML = '';
+
+            // Display each snippet
+            snippets.forEach(function (snippet, index) {
+                var snippetContainer = document.createElement('div');
+                snippetContainer.className = 'code-container';
+
+                var snippetTitle = document.createElement('div');
+                snippetTitle.className = 'code-title';
+                snippetTitle.innerHTML = snippet.title;
+                snippetTitle.onclick = function () {
+                    toggleCode(index);
+                };
+
+                var snippetContent = document.createElement('div');
+                snippetContent.id = 'codeContent' + index;
+                snippetContent.className = 'code-content';
+                snippetContent.innerHTML = snippet.content;
+
+                snippetContainer.appendChild(snippetTitle);
+                snippetContainer.appendChild(snippetContent);
+
+                codeSnippetsContainer.appendChild(snippetContainer);
+            });
+        }
+
+        // Load existing snippets on page load
+        loadSnippets();
+    </script>
+
+</body>
+</html>

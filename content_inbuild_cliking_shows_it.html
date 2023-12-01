@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unity Code Snippets</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .code-container {
+            margin-bottom: 20px;
+        }
+
+        .code-title {
+            cursor: pointer;
+            padding: 10px;
+            background-color: #3498db;
+            color: #fff;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .code-content {
+            display: none;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Unity Code Snippets</h1>
+
+    <div class="code-container">
+        <div class="code-title" onclick="toggleCode('movementCode')">2D Movement with Flip</div>
+        <div id="movementCode" class="code-content">
+            [SerializeField] private float speed;
+
+            private void Awake(){
+                body = GetComponent<Rigidbody2D>();
+            }
+
+            private void Update(){
+                float horizontalInput = Input.GetAxis("Horizontal");
+                body.velocity = new Vector2(horizontalInput * speed, body.velocity.y);
+                
+                if(horizontalInput > 0.01f)
+                    transform.localScale = Vector3.one;
+                else if(horizontalInput < -0.01f)
+                    transform.localScale = new Vector3(-1, 1, 1);
+                    
+                if(Input.GetKey(KeyCode.Space))
+                    body.velocity = new Vector2(body.velocity.x, speed);
+            }
+        </div>
+    </div>
+
+    <!-- Add more code containers as needed -->
+
+    <script>
+        function toggleCode(codeId) {
+            var codeContent = document.getElementById(codeId);
+            codeContent.style.display = (codeContent.style.display === 'none' || codeContent.style.display === '') ? 'block' : 'none';
+        }
+    </script>
+
+</body>
+</html>

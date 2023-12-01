@@ -1,0 +1,228 @@
+<!-- index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unity Code Snippets</title>
+    <link rel="stylesheet" href="./css/style.css" />
+    
+  </head>
+  <body>
+    <h1>Unity Code Snippets</h1>
+    <div id="searchForm">
+      <label for="searchInput">Search:</label>
+      <input
+        type="text"
+        id="searchInput"
+        oninput="searchSnippets()"
+        placeholder="Enter search term"
+      />
+    </div>
+    <div id="addSnippetForm">
+      <label for="titleInput">Title:</label>
+      <input type="text" id="titleInput" placeholder="Enter title" />
+
+      <label for="contentInput">Content:</label>
+      <textarea id="contentInput" placeholder="Enter content"></textarea>
+      <label for="imageInput">Images:</label>
+      <input type="file" id="imageInput" accept="image/*" multiple />
+      <button id="saveButton" onclick="saveSnippet()">Save Snippet</button>
+    </div>
+    <div id="imageModal" class="modal">
+      <span class="close" onclick="closeImageModal()">&times;</span>
+      <img id="modalImage" class="modal-content" />
+      <div id="nextButton" class="modal-navigation">&#9654;</div>
+      <div id="prevButton" class="modal-navigation">&#9664;</div>
+    </div>
+    <div id="codeSnippets"></div>
+
+    <script>
+      async function saveSnippet() {
+        const title = document.getElementById("titleInput").value;
+        const content = document.getElementById("contentInput").value;
+        const imageInput = document.getElementById("imageInput");
+
+        if (!title || !content) {
+          alert("Title and content are required.");
+          return;
+        }
+        const formData = new FormData();
+        formData.append("title", title);
+        formData.append("content", content);
+        // Append each selected image to FormData
+        for (let i = 0; i < imageInput.files.length; i++) {
+          formData.append("images", imageInput.files[i]);
+        }
+
+        const response = await fetch("http://localhost:3000/snippets", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          // Clear input fields
+          titleInput.value = "";
+          contentInput.value = "";
+          imageInput.value = "";
+
+          loadSnippets();
+        } else {
+          const { error } = await response.json();
+          alert(error);
+        }
+      }
+
+      async function toggleCode(index) {
+        const codeContent = document.getElementById("codeContent" + index);
+        codeContent.style.display =
+          codeContent.style.display === "none" ||
+          codeContent.style.display === ""
+            ? "block"
+            : "none";
+      }
+
+      async function removeSnippet(index) {
+        const response = await fetch(
+          `http://localhost:3000/snippets/${index}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        if (response.ok) {
+          loadSnippets();
+        } else {
+          const { error } = await response.json();
+          alert(error);
+        }
+      }
+      async function searchSnippets() {
+        const searchInput = document.getElementById("searchInput").value;
+        const response = await fetch(
+          `http://localhost:3000/snippets/${searchInput}`
+        );
+        const snippets = await response.json();
+        const codeSnippetsContainer = document.getElementById("codeSnippets");
+
+        // Clear existing snippets
+        codeSnippetsContainer.innerHTML = "";
+
+        // Display each snippet
+        snippets.forEach(function (snippet, index) {
+          const snippetContainer = document.createElement("div");
+          snippetContainer.className = "code-container";
+
+          const snippetTitle = document.createElement("div");
+          snippetTitle.className = "code-title";
+          snippetTitle.innerHTML = snippet.title;
+          snippetTitle.onclick = function () {
+            toggleCode(index);
+          };
+
+          const snippetActions = document.createElement("div");
+          snippetActions.className = "code-actions";
+
+          const removeButton = document.createElement("button");
+          removeButton.className = "removeButton";
+          removeButton.innerHTML = "Remove";
+          removeButton.onclick = function () {
+            removeSnippet(index);
+          };
+
+          snippetActions.appendChild(removeButton);
+
+          const snippetContent = document.createElement("div");
+          snippetContent.id = "codeContent" + index;
+          snippetContent.className = "code-content";
+          snippetContent.innerHTML = snippet.content;
+
+          snippetContainer.appendChild(snippetTitle);
+          snippetContainer.appendChild(snippetActions);
+          snippetContainer.appendChild(snippetContent);
+
+          codeSnippetsContainer.appendChild(snippetContainer);
+        });
+      }
+
+      async function loadSnippets() {
+        const response = await fetch("http://localhost:3000/snippets");
+        const snippets = await response.json();
+        const codeSnippetsContainer = document.getElementById("codeSnippets");
+
+        // Clear existing snippets
+        codeSnippetsContainer.innerHTML = "";
+
+        // Display each snippet
+        snippets.forEach(function (snippet, index) {
+          const snippetContainer = document.createElement("div");
+          snippetContainer.className = "code-container";
+
+          const snippetTitle = document.createElement("div");
+          snippetTitle.className = "code-title";
+          snippetTitle.innerHTML = snippet.title;
+          snippetTitle.onclick = function () {
+            toggleCode(index);
+          };
+
+          const snippetActions = document.createElement("div");
+          snippetActions.className = "code-actions";
+
+          const removeButton = document.createElement("button");
+          removeButton.className = "removeButton";
+          removeButton.innerHTML = "Remove";
+          removeButton.onclick = function () {
+            removeSnippet(index);
+          };
+
+          snippetActions.appendChild(removeButton);
+
+          const snippetContent = document.createElement("div");
+          snippetContent.id = "codeContent" + index;
+          snippetContent.className = "code-content";
+
+          if (snippet.images) {
+            const imageList = document.createElement("ul");
+            imageList.className = "image-list";
+
+            snippet.images.forEach((image, imageIndex) => {
+              const imageItem = document.createElement("li");
+              imageItem.innerHTML = `<span class="image-name" onclick="openImageModal('${image}')">${image}</span>`;
+              imageList.appendChild(imageItem);
+            });
+
+            snippetContent.appendChild(imageList);
+          }
+
+          // Display text content
+          snippetContent.innerHTML += snippet.content;
+
+          snippetContainer.appendChild(snippetTitle);
+          snippetContainer.appendChild(snippetActions);
+          snippetContainer.appendChild(snippetContent);
+
+          codeSnippetsContainer.appendChild(snippetContainer);
+        });
+      }
+
+      // Load existing snippets on page load
+      loadSnippets();
+
+      // Function to open the modal with the clicked image
+      function openImageModal(imageSrc) {
+        const modal = document.getElementById("imageModal");
+        const modalImage = document.getElementById("modalImage");
+        
+        modalImage.src = imageSrc;
+        modal.style.display = "block";
+      }
+  
+      // Function to close the modal
+      function closeImageModal() {
+        const modal = document.getElementById("imageModal");
+        modal.style.display = "none";
+      }
+    </script>
+  </body>
+</html>
